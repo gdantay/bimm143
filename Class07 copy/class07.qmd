@@ -1,0 +1,180 @@
+---
+title: "Class07"
+author: "BIMM 143 Gen Dantay"
+format: pdf
+---
+
+# Clustering
+
+First, let's make up some data to cluster so we can get a feel for these methods
+and how to work with them.
+
+We can use the `rnorm()` function to get random numbers from a normal distribution around a given `mean`.
+```{r}
+hist(rnorm(5000, mean = 3))
+```
+
+Let's get 30 points with a mean of 3.
+```{r}
+tmp <- c(rnorm(30, mean = 3), rnorm(30, mean = -3))
+tmp
+```
+Trying `rev()`:
+```{r}
+rev(c(1, 2, 3, 4, 5))
+cbind(c(1, 2, 3, 4, 5), rev(c(1,2,3,4,5)))
+```
+Putting two together(code above the one above this):
+```{r}
+x <- cbind(x=tmp, y=rev(tmp))
+plot(x)
+```
+
+## K-means clustering.
+
+Very popular clustering method that we can use with the `kmeans()` function in
+base R.
+```{r}
+# 2 clusters:
+# Cluster vector says which cluster they belong to.
+# Available components is the stuff needed to work with this answer.
+km <- kmeans(x, centers = 2)
+km
+```
+```{r}
+# Questions:
+#Cluster size:
+km$size
+#Cluster assignment/membership:
+km$cluster
+km$centers
+```
+> Q. Plot x colored by the kmeans cluster assignment and...
+
+```{r}
+mycols <- c(1, 2)
+plot(x, col=km$cluster)
+```
+
+>Q. Let's cluster into 3 groups or same `x` data and make a plot. 
+
+```{r}
+help(kmeans)
+```
+
+```{r}
+km<- kmeans(x, centers=3)
+plot(x, col=km$cluster)
+```
+
+# Heirarchical Clustering 
+
+we can use the `hclust()` function for Heirarchical Clustering. Unlike `kmeans()` where we could just pass in our data as input, we need to give each `hclust()` a "distance matrix". 
+
+we will use the `dist()` function to start with:
+
+```{r}
+d<- dist(x)
+hc<- hclust(d)
+```
+
+
+```{r}
+plot(hc)
+```
+
+I can now "Cut" my tree with the `cutree()` to yield a cluster membership vector. 
+
+```{r}
+cutree(hc, h=8)
+```
+
+You can also tell `cutree()` to cut where it yields "k" groups.
+
+```{r}
+grps<- cutree(hc, k=2)
+
+```
+```{r}
+plot(x, col=grps)
+```
+
+# Principal Component Analysis (PCA)
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url, row.names=1)
+x
+```
+
+>Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+
+```{r}
+dim(x)
+```
+There are 17 rows and 5 columns. We can use dim(x) to get both the ouputs of row and column, or we can use `nrow(x)` or `ncol(x)`
+
+> Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+
+the solutions are below, but I much prefer putting in `row.names=1` more because it is much more simple and more robust than the others. 
+
+```{r}
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x)
+```
+
+```{r}
+dim(x)
+```
+```{r}
+x <- read.csv(url, row.names=1)
+head(x)
+```
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+>Q3: Changing what optional argument in the above barplot() function results in the following plot?
+
+Changing beside from `T` to `F` will create the plot below. 
+
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+>Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+
+```
+
+It is called a pair plot, because it is all countries paired together. From the plot, we see that N.Ireland, compared to England, is very different in terms of one of the food categories consumed. If a point lands on a diagonal that would mean that the specific food consumption is similar between two countries. 
+
+```{r}
+?prcomp()
+```
+The main PCA function in base R is called `prcomp()` it expects the transpose of our data. 
+
+```{r}
+pca<- prcomp(t(x))
+summary(pca)
+```
+
+```{r}
+attributes(pca)
+```
+
+```{r}
+pca$x
+```
+>Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+
+while the beginning graphs show almost no obvious deviations, from the pair plot, we see that whatever the blue point is different seems more like an outlier from the other countries. Due to this, we probably end up with the results in the graph below:
+
+>Q7 and Q8 are the graphs below:
+
+```{r}
+plot(pca$x[,1], pca$x[,2], col=c("orange", "red", "blue", "darkgreen"), pch=16)
+text(pca$x[,1], pca$x[,2], colnames(x))
+```
+
